@@ -25,6 +25,8 @@ object AppModule {
 
     @Provides @IoDispatcher fun ioDispatcher(): CoroutineDispatcher = Dispatchers.IO
 
+    @Provides @DefaultDispatcher fun defaultDispatcher(): CoroutineDispatcher = Dispatchers.Default
+
     @Provides
     @Singleton
     @ApplicationScope

@@ -7,4 +7,9 @@ import androidx.compose.runtime.Immutable
 import org.prauga.photos.media.model.MediaItem
 
 @Immutable
-data class LibraryUiState(val items: List<MediaItem> = emptyList(), val loaded: Boolean = false)
+data class LibraryUiState(
+    val items: List<MediaItem> = emptyList(),
+    val months: List<MediaGroup> = emptyList(),
+    val years: List<MediaGroup> = emptyList(),
+    val loaded: Boolean = false,
+)

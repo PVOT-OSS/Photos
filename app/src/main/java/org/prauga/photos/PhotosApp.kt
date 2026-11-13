@@ -5,6 +5,7 @@ package org.prauga.photos
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -13,6 +14,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.LazyGridState
@@ -24,6 +26,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -37,6 +40,8 @@ import org.prauga.photos.access.ui.rememberMediaAccessState
 import org.prauga.photos.album.ui.AlbumScreen
 import org.prauga.photos.collections.ui.CollectionsScreen
 import org.prauga.photos.common.ui.TileRegistry
+import org.prauga.photos.library.ui.LibraryMode
+import org.prauga.photos.library.ui.LibraryModeBar
 import org.prauga.photos.library.ui.LibraryScreen
 import org.prauga.photos.viewer.ui.ViewerScreen
 import org.prauga.photos.viewer.ui.ViewerViewModel
@@ -61,6 +66,7 @@ fun PhotosApp(viewModel: PhotosViewModel = hiltViewModel()) {
     }
 
     var tab by rememberSaveable { mutableIntStateOf(LibraryTab) }
+    var libraryMode by rememberSaveable { mutableStateOf(LibraryMode.All) }
     var albumId by rememberSaveable { mutableStateOf<String?>(null) }
     var viewer by remember { mutableStateOf<ViewerRequest?>(null) }
     val registry = remember { TileRegistry() }
@@ -93,17 +99,28 @@ fun PhotosApp(viewModel: PhotosViewModel = hiltViewModel()) {
             } else {
                 PvotScreenScaffold(
                     bottomBar = {
-                        PvotNavBar(
-                            selectedTab = tab,
-                            onTabClick = { tab = it },
-                            tabs = Tabs,
-                            modifier = Modifier.padding(bottom = 8.dp),
-                        )
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            AnimatedVisibility(visible = tab == LibraryTab, enter = fadeIn(), exit = fadeOut()) {
+                                LibraryModeBar(
+                                    mode = libraryMode,
+                                    onSelect = { libraryMode = it },
+                                    modifier = Modifier.padding(bottom = 12.dp),
+                                )
+                            }
+                            PvotNavBar(
+                                selectedTab = tab,
+                                onTabClick = { tab = it },
+                                tabs = Tabs,
+                                modifier = Modifier.padding(bottom = 8.dp),
+                            )
+                        }
                     }
                 ) { _ ->
                     Crossfade(targetState = tab, animationSpec = tween(220), label = "tab") { selected ->
                         if (selected == LibraryTab) {
                             LibraryScreen(
+                                mode = libraryMode,
+                                onModeChange = { libraryMode = it },
                                 gridState = libraryGrid,
                                 registry = registry,
                                 onOpen = { viewer = ViewerRequest(ViewerViewModel.LibrarySource, it.id) },
