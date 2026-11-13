@@ -201,7 +201,7 @@ private fun MediaTile(
 
 @Composable
 fun GridCountFooter(items: List<MediaItem>, modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxWidth().padding(vertical = 20.dp), contentAlignment = Alignment.Center) {
+    Box(modifier.fillMaxWidth().padding(vertical = 10.dp), contentAlignment = Alignment.Center) {
         Text(
             text = mediaCountText(items),
             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),

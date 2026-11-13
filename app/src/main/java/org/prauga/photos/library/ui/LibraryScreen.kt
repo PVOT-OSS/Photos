@@ -31,7 +31,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.prauga.pvot.designsystem.components.list.PvotFastScrollSection
 import com.prauga.pvot.designsystem.components.list.PvotFastScroller
-import com.prauga.pvot.designsystem.navigation.LocalPvotNavBarSizes
 import org.prauga.photos.R
 import org.prauga.photos.common.format.formatMonthYear
 import org.prauga.photos.common.format.formatShortMonthYear
@@ -41,14 +40,14 @@ import org.prauga.photos.common.ui.GridCountFooter
 import org.prauga.photos.common.ui.LargeTitleHeader
 import org.prauga.photos.common.ui.MediaGrid
 import org.prauga.photos.common.ui.TileRegistry
-import org.prauga.photos.common.ui.stableNavigationBars
 import org.prauga.photos.common.ui.stableStatusBars
 import org.prauga.photos.media.model.MediaItem
 
-private val ModeBarClearance = 64.dp
+private val BottomGap = 8.dp
 
 @Composable
 fun LibraryScreen(
+    bottomInset: Dp,
     mode: LibraryMode,
     onModeChange: (LibraryMode) -> Unit,
     gridState: LazyGridState,
@@ -59,12 +58,13 @@ fun LibraryScreen(
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     if (!state.loaded) return
-    LibraryContent(state, mode, onModeChange, gridState, registry, onOpen, banner)
+    LibraryContent(state, bottomInset, mode, onModeChange, gridState, registry, onOpen, banner)
 }
 
 @Composable
 private fun LibraryContent(
     state: LibraryUiState,
+    bottomInset: Dp,
     mode: LibraryMode,
     onModeChange: (LibraryMode) -> Unit,
     gridState: LazyGridState,
@@ -87,11 +87,7 @@ private fun LibraryContent(
             }
         }
     val top = WindowInsets.stableStatusBars.asPaddingValues().calculateTopPadding() + 72.dp
-    val bottom: Dp =
-        WindowInsets.stableNavigationBars.asPaddingValues().calculateBottomPadding() +
-            LocalPvotNavBarSizes.current.barHeight +
-            ModeBarClearance +
-            24.dp
+    val bottom = bottomInset + BottomGap
     val padding = PaddingValues(top = top, bottom = bottom)
     val sections =
         remember(state.months) {

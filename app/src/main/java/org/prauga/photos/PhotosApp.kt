@@ -31,6 +31,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.prauga.pvot.designsystem.components.PvotScreenScaffold
@@ -71,6 +73,8 @@ fun PhotosApp(viewModel: PhotosViewModel = hiltViewModel()) {
     var tab by rememberSaveable { mutableIntStateOf(LibraryTab) }
     var libraryMode by rememberSaveable { mutableStateOf(LibraryMode.All) }
     val bars = rememberCollapsingBarsState()
+    val density = LocalDensity.current
+    var bottomBarsHeight by remember { mutableStateOf(0.dp) }
     bars.homeIsTop = !(tab == LibraryTab && libraryMode == LibraryMode.All)
     LaunchedEffect(tab, libraryMode) { bars.expand() }
     var albumId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -105,7 +109,14 @@ fun PhotosApp(viewModel: PhotosViewModel = hiltViewModel()) {
             } else {
                 PvotScreenScaffold(
                     bottomBar = {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            // Measured only while expanded, so collapsing doesn't move the content under it.
+                            modifier =
+                                Modifier.onSizeChanged {
+                                    if (!bars.collapsed) bottomBarsHeight = with(density) { it.height.toDp() }
+                                },
+                        ) {
                             AnimatedVisibility(
                                 visible = tab == LibraryTab && !bars.collapsed,
                                 enter = fadeIn() + expandVertically(expandFrom = Alignment.Bottom),
@@ -138,6 +149,7 @@ fun PhotosApp(viewModel: PhotosViewModel = hiltViewModel()) {
                     ) { selected ->
                         if (selected == LibraryTab) {
                             LibraryScreen(
+                                bottomInset = bottomBarsHeight,
                                 mode = libraryMode,
                                 onModeChange = { libraryMode = it },
                                 gridState = libraryGrid,
@@ -148,7 +160,7 @@ fun PhotosApp(viewModel: PhotosViewModel = hiltViewModel()) {
                                 },
                             )
                         } else {
-                            CollectionsScreen(onOpen = { albumId = it.id })
+                            CollectionsScreen(bottomInset = bottomBarsHeight, onOpen = { albumId = it.id })
                         }
                     }
                 }

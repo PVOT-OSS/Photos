@@ -33,34 +33,34 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import com.prauga.pvot.designsystem.effects.pvotPressScale
-import com.prauga.pvot.designsystem.navigation.LocalPvotNavBarSizes
 import java.text.NumberFormat
 import org.prauga.photos.R
 import org.prauga.photos.common.ui.LargeTitleHeader
 import org.prauga.photos.common.ui.albumTitle
-import org.prauga.photos.common.ui.stableNavigationBars
 import org.prauga.photos.common.ui.stableStatusBars
 import org.prauga.photos.common.ui.thumbnailRequest
 import org.prauga.photos.media.model.Album
 
 @Composable
-fun CollectionsScreen(onOpen: (Album) -> Unit, viewModel: CollectionsViewModel = hiltViewModel()) {
+fun CollectionsScreen(
+    bottomInset: Dp,
+    onOpen: (Album) -> Unit,
+    viewModel: CollectionsViewModel = hiltViewModel(),
+) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    CollectionsContent(state, onOpen)
+    CollectionsContent(state, bottomInset, onOpen)
 }
 
 @Composable
-private fun CollectionsContent(state: CollectionsUiState, onOpen: (Album) -> Unit) {
+private fun CollectionsContent(state: CollectionsUiState, bottomInset: Dp, onOpen: (Album) -> Unit) {
     val top = WindowInsets.stableStatusBars.asPaddingValues().calculateTopPadding() + 64.dp
-    val bottom =
-        WindowInsets.stableNavigationBars.asPaddingValues().calculateBottomPadding() +
-            LocalPvotNavBarSizes.current.barHeight +
-            24.dp
+    val bottom = bottomInset + 16.dp
 
     Box(Modifier.fillMaxSize()) {
         LazyVerticalGrid(
