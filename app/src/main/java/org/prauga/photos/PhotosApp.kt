@@ -8,8 +8,10 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -28,6 +30,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import com.prauga.pvot.designsystem.components.PvotScreenScaffold
@@ -67,6 +70,9 @@ fun PhotosApp(viewModel: PhotosViewModel = hiltViewModel()) {
 
     var tab by rememberSaveable { mutableIntStateOf(LibraryTab) }
     var libraryMode by rememberSaveable { mutableStateOf(LibraryMode.All) }
+    val bars = rememberCollapsingBarsState()
+    bars.homeIsTop = !(tab == LibraryTab && libraryMode == LibraryMode.All)
+    LaunchedEffect(tab, libraryMode) { bars.expand() }
     var albumId by rememberSaveable { mutableStateOf<String?>(null) }
     var viewer by remember { mutableStateOf<ViewerRequest?>(null) }
     val registry = remember { TileRegistry() }
@@ -100,7 +106,11 @@ fun PhotosApp(viewModel: PhotosViewModel = hiltViewModel()) {
                 PvotScreenScaffold(
                     bottomBar = {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            AnimatedVisibility(visible = tab == LibraryTab, enter = fadeIn(), exit = fadeOut()) {
+                            AnimatedVisibility(
+                                visible = tab == LibraryTab && !bars.collapsed,
+                                enter = fadeIn() + expandVertically(expandFrom = Alignment.Bottom),
+                                exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Bottom),
+                            ) {
                                 LibraryModeBar(
                                     mode = libraryMode,
                                     onSelect = { libraryMode = it },
@@ -109,14 +119,23 @@ fun PhotosApp(viewModel: PhotosViewModel = hiltViewModel()) {
                             }
                             PvotNavBar(
                                 selectedTab = tab,
-                                onTabClick = { tab = it },
+                                onTabClick = {
+                                    tab = it
+                                    bars.expand()
+                                },
                                 tabs = Tabs,
+                                compact = bars.collapsed,
                                 modifier = Modifier.padding(bottom = 8.dp),
                             )
                         }
                     }
                 ) { _ ->
-                    Crossfade(targetState = tab, animationSpec = tween(220), label = "tab") { selected ->
+                    Crossfade(
+                        targetState = tab,
+                        animationSpec = tween(220),
+                        label = "tab",
+                        modifier = Modifier.nestedScroll(bars.connection),
+                    ) { selected ->
                         if (selected == LibraryTab) {
                             LibraryScreen(
                                 mode = libraryMode,
