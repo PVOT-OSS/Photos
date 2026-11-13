@@ -4,6 +4,8 @@
 plugins {
     alias(libs.plugins.pvot.android.application)
     alias(libs.plugins.pvot.android.compose)
+    alias(libs.plugins.hilt)
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -16,6 +18,8 @@ android {
         versionCode = 1
         versionName = "0.1.0"
     }
+
+    buildFeatures { buildConfig = true }
 
     buildTypes {
         debug { applicationIdSuffix = ".dev" }
@@ -43,10 +47,9 @@ dependencies {
     implementation(libs.telephoto.zoomable.image.coil3)
     implementation(libs.media3.exoplayer)
     implementation(libs.media3.ui.compose)
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.lifecycle.viewmodel.compose)
+    implementation(libs.timber)
     testImplementation(libs.junit)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(libs.androidx.junit)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-FileCopyrightText: 2026 Saalim Quadri <danascape@gmail.com>
+     SPDX-License-Identifier: Apache-2.0
+-->
+<resources>
+    <color name="media_overlay_content">#FFFFFFFF</color>
+    <color name="media_scrim">#FF000000</color>
+    <color name="viewer_immersive_background">#FF000000</color>
+</resources>

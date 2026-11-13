@@ -8,21 +8,15 @@ import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.video.VideoFrameDecoder
-import org.prauga.photos.data.MediaRepository
+import dagger.hilt.android.HiltAndroidApp
+import timber.log.Timber
 
-/** The app's long-lived objects, built by hand (no DI framework). */
-class AppContainer(application: Application) {
-    val mediaRepository: MediaRepository = MediaRepository(application.contentResolver)
-}
-
+@HiltAndroidApp
 class PhotosApplication : Application(), SingletonImageLoader.Factory {
-
-    lateinit var container: AppContainer
-        private set
 
     override fun onCreate() {
         super.onCreate()
-        container = AppContainer(this)
+        if (BuildConfig.DEBUG) Timber.plant(Timber.DebugTree())
     }
 
     override fun newImageLoader(context: PlatformContext): ImageLoader =

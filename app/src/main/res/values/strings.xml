@@ -45,4 +45,16 @@
     <string name="action_mute">Mute</string>
     <string name="action_unmute">Unmute</string>
     <string name="share_title">Share with</string>
+
+    <string name="album_unknown">Unknown</string>
+    <string name="count_pair">%1$s, %2$s</string>
+    <string name="detail_separator">"  ·  "</string>
+    <string name="detail_date_time">%1$s · %2$s</string>
+    <string name="detail_dimensions">%1$d × %2$d</string>
+    <string name="exif_aperture">ƒ/%1$s</string>
+    <string name="exif_exposure_fraction">1/%1$d s</string>
+    <string name="exif_exposure_seconds">%1$.1f s</string>
+    <string name="exif_iso">ISO %1$s</string>
+    <string name="exif_focal_length">%1$.1f mm</string>
+    <string name="time_remaining">−%1$s</string>
 </resources>

@@ -6,8 +6,9 @@ package org.prauga.photos
 import android.os.Bundle
 import com.prauga.pvot.designsystem.platform.PvotBaseActivity
 import com.prauga.pvot.designsystem.theme.PvotAppTheme
-import org.prauga.photos.ui.PhotosApp
+import dagger.hilt.android.AndroidEntryPoint
 
+@AndroidEntryPoint
 class MainActivity : PvotBaseActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
