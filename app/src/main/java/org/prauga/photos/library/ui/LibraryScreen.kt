@@ -29,9 +29,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.prauga.pvot.designsystem.components.list.PvotFastScrollSection
+import com.prauga.pvot.designsystem.components.list.PvotFastScroller
 import com.prauga.pvot.designsystem.navigation.LocalPvotNavBarSizes
 import org.prauga.photos.R
 import org.prauga.photos.common.format.formatMonthYear
+import org.prauga.photos.common.format.formatShortMonthYear
 import org.prauga.photos.common.format.formatYear
 import org.prauga.photos.common.ui.FooterKey
 import org.prauga.photos.common.ui.GridCountFooter
@@ -90,19 +93,30 @@ private fun LibraryContent(
             ModeBarClearance +
             24.dp
     val padding = PaddingValues(top = top, bottom = bottom)
+    val sections =
+        remember(state.months) {
+            state.months.map { PvotFastScrollSection(formatShortMonthYear(context, it.start), it.firstIndex) }
+        }
 
     Box(Modifier.fillMaxSize()) {
         Crossfade(targetState = mode, animationSpec = tween(220), label = "libraryMode") { shown ->
             when (shown) {
                 LibraryMode.All ->
-                    MediaGrid(
-                        items = items,
-                        state = gridState,
-                        registry = registry,
-                        onOpen = onOpen,
-                        contentPadding = padding,
-                        footer = if (items.isNotEmpty()) ({ GridCountFooter(items) }) else null,
-                    )
+                    Box(Modifier.fillMaxSize()) {
+                        MediaGrid(
+                            items = items,
+                            state = gridState,
+                            registry = registry,
+                            onOpen = onOpen,
+                            contentPadding = padding,
+                            footer = if (items.isNotEmpty()) ({ GridCountFooter(items) }) else null,
+                        )
+                        PvotFastScroller(
+                            state = gridState,
+                            sections = sections,
+                            modifier = Modifier.align(Alignment.TopEnd).padding(padding),
+                        )
+                    }
                 LibraryMode.Months ->
                     MediaGroupList(
                         groups = state.months,

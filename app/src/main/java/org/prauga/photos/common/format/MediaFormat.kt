@@ -16,6 +16,14 @@ private fun local(ms: Long) = Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefau
 fun formatMonthYear(context: Context, ms: Long): String =
     DateUtils.formatDateTime(context, ms, DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_NO_MONTH_DAY or DateUtils.FORMAT_SHOW_YEAR)
 
+fun formatShortMonthYear(context: Context, ms: Long): String =
+    DateUtils.formatDateTime(
+        context,
+        ms,
+        DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_NO_MONTH_DAY or DateUtils.FORMAT_SHOW_YEAR or
+            DateUtils.FORMAT_ABBREV_MONTH,
+    )
+
 fun formatYear(ms: Long): String = local(ms).year.toString()
 
 fun formatDayLong(ms: Long): String = DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).format(local(ms))
