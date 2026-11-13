@@ -53,6 +53,9 @@ import org.prauga.photos.media.model.MediaItem
 @Composable
 fun ViewerChrome(
     item: MediaItem?,
+    items: List<MediaItem>,
+    currentIndex: Int,
+    onPick: (Int) -> Unit,
     visible: Boolean,
     infoVisible: Boolean,
     details: CaptureDetails?,
@@ -100,7 +103,7 @@ fun ViewerChrome(
         }
 
         Column(
-            Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(16.dp),
+            Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             AnimatedVisibility(
@@ -108,7 +111,14 @@ fun ViewerChrome(
                 enter = fadeIn() + expandVertically(spring(stiffness = 500f)),
                 exit = fadeOut() + shrinkVertically(),
             ) {
-                if (item != null) InfoPanel(item, details, backdrop)
+                if (item != null) InfoPanel(item, details, backdrop, Modifier.padding(horizontal = 16.dp))
+            }
+            AnimatedVisibility(
+                visible = visible && !infoVisible && items.size > 1,
+                enter = fadeIn(),
+                exit = fadeOut(),
+            ) {
+                Filmstrip(items, currentIndex, onPick, Modifier.padding(bottom = 12.dp))
             }
             AnimatedVisibility(
                 visible = visible,
@@ -154,7 +164,7 @@ private fun ActionIcon(@DrawableRes icon: Int, @StringRes label: Int, tint: Colo
 }
 
 @Composable
-private fun InfoPanel(item: MediaItem, details: CaptureDetails?, backdrop: PvotGlassBackdrop) {
+private fun InfoPanel(item: MediaItem, details: CaptureDetails?, backdrop: PvotGlassBackdrop, modifier: Modifier) {
     val context = LocalContext.current
     val separator = stringResource(R.string.detail_separator)
     val fileLine =
@@ -182,7 +192,7 @@ private fun InfoPanel(item: MediaItem, details: CaptureDetails?, backdrop: PvotG
         cornerRadius = 26.dp,
         contentAlignment = Alignment.TopStart,
         contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
-        modifier = Modifier.fillMaxWidth().padding(bottom = 12.dp),
+        modifier = modifier.fillMaxWidth().padding(bottom = 12.dp),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(

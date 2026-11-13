@@ -152,7 +152,7 @@ private fun VideoControls(player: ExoPlayer, visible: Boolean) {
             modifier =
                 Modifier.align(Alignment.BottomCenter)
                     .navigationBarsPadding()
-                    .padding(start = 16.dp, end = 16.dp, bottom = 84.dp),
+                    .padding(start = 16.dp, end = 16.dp, bottom = 140.dp),
         ) {
             PvotGlassSurface(
                 contentPadding = PaddingValues(horizontal = 6.dp, vertical = 2.dp),

@@ -242,6 +242,9 @@ private fun ViewerContent(
 
         ViewerChrome(
             item = current,
+            items = items,
+            currentIndex = pager.currentPage,
+            onPick = { scope.launch { pager.scrollToPage(it) } },
             visible = chromeVisible,
             infoVisible = info,
             details = current?.let { details[it.id] },
