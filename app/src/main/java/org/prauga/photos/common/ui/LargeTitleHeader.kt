@@ -5,9 +5,10 @@ package org.prauga.photos.common.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -46,7 +47,7 @@ fun LargeTitleHeader(
         modifier
             .fillMaxWidth()
             .background(fade)
-            .statusBarsPadding()
+            .windowInsetsPadding(WindowInsets.stableStatusBars)
             .padding(start = 20.dp, end = 20.dp, top = 8.dp + topInset, bottom = 28.dp)
     ) {
         Text(

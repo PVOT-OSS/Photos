@@ -4,6 +4,8 @@
 package org.prauga.photos.viewer.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalActivity
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
@@ -47,6 +49,10 @@ import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import com.prauga.pvot.designsystem.effects.pvotGlassBackdrop
 import com.prauga.pvot.designsystem.effects.rememberPvotGlassBackdrop
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.abs
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.ZoomSpec
@@ -73,6 +79,7 @@ private val SnapBackSpring =
 private const val DismissVelocity = 1800f
 private const val DragShrink = 0.3f
 private const val MaxZoom = 6f
+private const val BackDragShare = 0.25f
 
 @Composable
 fun ViewerScreen(
@@ -165,7 +172,17 @@ private fun ViewerContent(
             progress.animateTo(1f, OpenSpring)
             phase = Phase.Open
         }
-        BackHandler(enabled = phase != Phase.Closing) { if (info) info = false else close() }
+        PredictiveBackHandler(enabled = phase == Phase.Open && !info) { events ->
+            try {
+                events.collect { drag.snapTo(Offset(0f, it.progress * container.height * BackDragShare)) }
+                close()
+            } catch (e: CancellationException) {
+                drag.animateTo(Offset.Zero, SnapBackSpring)
+                throw e
+            }
+        }
+        BackHandler(enabled = info) { info = false }
+        ImmersiveSystemBars(immersive = phase == Phase.Open && !chrome)
 
         val chromeVisible = phase == Phase.Open && chrome && abs(drag.value.y) < 1f
         val backgroundAlpha =
@@ -308,4 +325,19 @@ private fun HeroImage(item: MediaItem, rect: Rect, alpha: Float) {
                 .size(with(density) { rect.width.toDp() }, with(density) { rect.height.toDp() })
                 .graphicsLayer { this.alpha = alpha },
     )
+}
+
+@Composable
+private fun ImmersiveSystemBars(immersive: Boolean) {
+    val window = LocalActivity.current?.window ?: return
+    DisposableEffect(window, immersive) {
+        val controller = WindowCompat.getInsetsController(window, window.decorView)
+        if (immersive) {
+            controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            controller.hide(WindowInsetsCompat.Type.systemBars())
+        } else {
+            controller.show(WindowInsetsCompat.Type.systemBars())
+        }
+        onDispose { controller.show(WindowInsetsCompat.Type.systemBars()) }
+    }
 }

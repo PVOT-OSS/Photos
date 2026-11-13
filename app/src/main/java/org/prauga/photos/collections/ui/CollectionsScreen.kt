@@ -14,9 +14,7 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -45,6 +43,8 @@ import java.text.NumberFormat
 import org.prauga.photos.R
 import org.prauga.photos.common.ui.LargeTitleHeader
 import org.prauga.photos.common.ui.albumTitle
+import org.prauga.photos.common.ui.stableNavigationBars
+import org.prauga.photos.common.ui.stableStatusBars
 import org.prauga.photos.common.ui.thumbnailRequest
 import org.prauga.photos.media.model.Album
 
@@ -56,9 +56,9 @@ fun CollectionsScreen(onOpen: (Album) -> Unit, viewModel: CollectionsViewModel =
 
 @Composable
 private fun CollectionsContent(state: CollectionsUiState, onOpen: (Album) -> Unit) {
-    val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 64.dp
+    val top = WindowInsets.stableStatusBars.asPaddingValues().calculateTopPadding() + 64.dp
     val bottom =
-        WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
+        WindowInsets.stableNavigationBars.asPaddingValues().calculateBottomPadding() +
             LocalPvotNavBarSizes.current.barHeight +
             24.dp
 

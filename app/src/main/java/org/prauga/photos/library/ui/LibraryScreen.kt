@@ -8,10 +8,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -34,6 +32,8 @@ import org.prauga.photos.common.ui.GridCountFooter
 import org.prauga.photos.common.ui.LargeTitleHeader
 import org.prauga.photos.common.ui.MediaGrid
 import org.prauga.photos.common.ui.TileRegistry
+import org.prauga.photos.common.ui.stableNavigationBars
+import org.prauga.photos.common.ui.stableStatusBars
 import org.prauga.photos.media.model.MediaItem
 
 @Composable
@@ -68,10 +68,10 @@ private fun LibraryContent(
             }
         }
     val bottom =
-        WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding() +
+        WindowInsets.stableNavigationBars.asPaddingValues().calculateBottomPadding() +
             LocalPvotNavBarSizes.current.barHeight +
             24.dp
-    val top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding() + 72.dp
+    val top = WindowInsets.stableStatusBars.asPaddingValues().calculateTopPadding() + 72.dp
 
     Box(Modifier.fillMaxSize()) {
         MediaGrid(
@@ -96,6 +96,6 @@ private fun LibraryContent(
             overMedia = items.isNotEmpty(),
             modifier = Modifier.align(Alignment.TopCenter),
         )
-        Box(Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 96.dp)) { banner() }
+        Box(Modifier.align(Alignment.TopCenter).windowInsetsPadding(WindowInsets.stableStatusBars).padding(top = 96.dp)) { banner() }
     }
 }
