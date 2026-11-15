@@ -1,0 +1,27 @@
+Photos is a gallery for the pictures and videos on your phone: quick to open, smooth to scroll and private by design.
+
+<b>Your library, all of it</b>
+• Every photo and video in one timeline, newest at the bottom, the way you took them
+• Pinch to change the grid from one big photo per row to a whole month on screen
+• Switch between Years, Months and All to jump through your library in seconds
+• Drag the edge of the screen to scrub through months with a date bubble
+• Collections: Favourites, Videos and every folder on your phone, such as Camera and Screenshots
+
+<b>A viewer that gets out of the way</b>
+• Photos grow out of the grid and shrink back into place when you close them
+• Swipe between photos, pinch or double tap to zoom deep into full-resolution pictures
+• Drag a photo down to close it, or use the back gesture
+• Tap once to hide everything but the photo
+• A filmstrip to jump to any photo nearby
+• Info shows when a photo was taken, which folder it is in, its size and the camera settings: aperture, shutter speed, ISO and focal length
+• Videos play in place with a scrubber and a mute button
+
+<b>Share, favourite, delete</b>
+• Share to any app, mark favourites, and delete with Android's own confirmation
+• Deleted items go to the system trash and can be restored for 30 days (Android 11 and newer)
+
+<b>Private</b>
+Photos has no internet permission. It reads your photos only to show them to you, and nothing leaves your phone through the app. No account, no ads, no analytics, no tracking. You can also give it access to only the photos you pick.
+
+<b>Open source</b>
+Photos is free software under the Apache License 2.0, made by PVOT-OSS.
