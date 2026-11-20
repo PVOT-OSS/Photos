@@ -133,6 +133,8 @@ fun PhotosApp(viewModel: PhotosViewModel = hiltViewModel()) {
                     )
                 } else {
                     PvotScreenScaffold(
+                        // The library's photos run under a side camera cutout; its text keeps clear.
+                        fullBleedContent = tab == LibraryTab,
                         bottomBar = {
                             BottomBars(
                                 tab = tab,

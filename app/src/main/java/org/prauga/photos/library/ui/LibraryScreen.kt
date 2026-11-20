@@ -8,9 +8,12 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +43,7 @@ import org.prauga.photos.common.ui.LargeTitleHeader
 import org.prauga.photos.common.ui.MediaGrid
 import org.prauga.photos.common.ui.TileRegistry
 import org.prauga.photos.common.ui.largeTitleClearance
+import org.prauga.photos.common.ui.scrolledUnderTop
 import org.prauga.photos.common.ui.stableStatusBars
 import org.prauga.photos.media.model.MediaItem
 
@@ -110,7 +114,10 @@ private fun LibraryContent(
                         PvotFastScroller(
                             state = gridState,
                             sections = sections,
-                            modifier = Modifier.align(Alignment.TopEnd).padding(padding),
+                            modifier =
+                                Modifier.align(Alignment.TopEnd)
+                                    .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+                                    .padding(padding),
                         )
                     }
                 LibraryMode.Months ->
@@ -149,11 +156,14 @@ private fun LibraryContent(
         LargeTitleHeader(
             title = stringResource(R.string.tab_library),
             subtitle = if (mode == LibraryMode.All) subtitle else "",
-            overMedia = mode == LibraryMode.All && items.isNotEmpty(),
+            overMedia = mode == LibraryMode.All && gridState.scrolledUnderTop(),
             modifier = Modifier.align(Alignment.TopCenter),
         )
         Box(
-            Modifier.align(Alignment.TopCenter).windowInsetsPadding(WindowInsets.stableStatusBars).padding(top = 96.dp)
+            Modifier.align(Alignment.TopCenter)
+                .windowInsetsPadding(WindowInsets.stableStatusBars)
+                .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+                .padding(top = 96.dp)
         ) {
             banner()
         }

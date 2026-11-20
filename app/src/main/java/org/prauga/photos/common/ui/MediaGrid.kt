@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -244,4 +245,11 @@ private fun mediaCountText(items: List<MediaItem>): String {
         2 -> stringResource(R.string.count_pair, parts[0], parts[1])
         else -> parts.firstOrNull().orEmpty()
     }
+}
+
+/** Whether the grid has scrolled, so its photos are under a header drawn over its top padding. */
+@Composable
+fun LazyGridState.scrolledUnderTop(): Boolean {
+    val scrolled by remember(this) { derivedStateOf { firstVisibleItemIndex > 0 || firstVisibleItemScrollOffset > 0 } }
+    return scrolled
 }

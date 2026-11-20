@@ -6,8 +6,11 @@ package org.prauga.photos.common.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,6 +33,8 @@ fun LargeTitleHeader(
     modifier: Modifier = Modifier,
     overMedia: Boolean = true,
     topInset: Dp = 0.dp,
+    tintStatusBar: Boolean = true,
+    belowStatusBar: Boolean = false,
 ) {
     val scrim = colorResource(R.color.media_scrim)
     val background = MaterialTheme.colorScheme.background
@@ -45,12 +50,15 @@ fun LargeTitleHeader(
         }
     val color = if (overMedia) colorResource(R.color.media_overlay_content) else MaterialTheme.colorScheme.onSurface
     val short = rememberPvotWindowLayout().height == PvotWindowHeight.Compact
+    // The status bar spans the window: a header in one of two panes leaves its icons alone.
+    StatusBarOverMedia(overMedia && tintStatusBar)
     val shadow = if (overMedia) Shadow(scrim.copy(alpha = 0.35f), blurRadius = 12f) else null
     Column(
         modifier
             .fillMaxWidth()
             .background(fade)
-            .windowInsetsPadding(WindowInsets.stableStatusBars)
+            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))
+            .then(if (belowStatusBar) Modifier else Modifier.windowInsetsPadding(WindowInsets.stableStatusBars))
             .padding(start = 20.dp, end = 20.dp, top = 8.dp + topInset, bottom = if (short) 16.dp else 28.dp)
     ) {
         Text(

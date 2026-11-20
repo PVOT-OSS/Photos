@@ -24,6 +24,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -41,6 +42,7 @@ import org.prauga.photos.common.ui.MediaGrid
 import org.prauga.photos.common.ui.TileRegistry
 import org.prauga.photos.common.ui.albumTitle
 import org.prauga.photos.common.ui.largeTitleClearance
+import org.prauga.photos.common.ui.scrolledUnderTop
 import org.prauga.photos.common.ui.stableNavigationBars
 import org.prauga.photos.common.ui.stableStatusBars
 import org.prauga.photos.media.model.Album
@@ -73,11 +75,15 @@ private fun AlbumContent(
     val gridState = remember(album.id) { LazyGridState(firstVisibleItemIndex = album.items.size) }
     val backdrop = rememberPvotGlassBackdrop()
     val backRoom = if (onBack != null) 52.dp else 0.dp
-    val top = WindowInsets.stableStatusBars.asPaddingValues().calculateTopPadding() + largeTitleClearance() + backRoom
+    // In a pane the status bar spans both panes in one colour of icons: keep photos out from under it.
+    val inPane = onBack == null
+    val overMedia = gridState.scrolledUnderTop()
+    val statusBar = WindowInsets.stableStatusBars.asPaddingValues().calculateTopPadding()
+    val top = (if (inPane) 0.dp else statusBar) + largeTitleClearance() + backRoom
     val bottom =
         maxOf(bottomInset, WindowInsets.stableNavigationBars.asPaddingValues().calculateBottomPadding()) + 24.dp
     val sides = WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)
-    Box(Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize().padding(top = if (inPane) statusBar else 0.dp).clipToBounds()) {
         Box(Modifier.fillMaxSize().pvotGlassBackdrop(backdrop).background(MaterialTheme.colorScheme.background)) {
             MediaGrid(
                 items = album.items,
@@ -86,20 +92,23 @@ private fun AlbumContent(
                 onOpen = onOpen,
                 contentPadding = PaddingValues(top = top, bottom = bottom),
                 footer = { GridCountFooter(album.items) },
-                modifier = Modifier.windowInsetsPadding(sides),
             )
             LargeTitleHeader(
                 title = albumTitle(album),
                 subtitle = "",
-                modifier = Modifier.align(Alignment.TopCenter).windowInsetsPadding(sides),
+                modifier = Modifier.align(Alignment.TopCenter),
+                overMedia = overMedia,
                 topInset = backRoom,
+                tintStatusBar = !inPane,
+                belowStatusBar = inPane,
             )
         }
         if (onBack != null) {
             PvotGlassIconButton(
                 onClick = onBack,
                 backdrop = backdrop,
-                contentColor = colorResource(R.color.media_overlay_content),
+                contentColor =
+                    if (overMedia) colorResource(R.color.media_overlay_content) else MaterialTheme.colorScheme.onSurface,
                 modifier =
                     Modifier.windowInsetsPadding(WindowInsets.stableStatusBars)
                         .windowInsetsPadding(sides)
