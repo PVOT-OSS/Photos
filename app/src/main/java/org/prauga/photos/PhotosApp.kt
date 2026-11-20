@@ -99,11 +99,14 @@ fun PhotosApp(viewModel: PhotosViewModel = hiltViewModel()) {
     val registry = remember { TileRegistry() }
     // Far past the end: the grid clamps it, so the library opens on its newest row.
     val libraryGrid = remember { LazyGridState(firstVisibleItemIndex = Int.MAX_VALUE / 2) }
-    // Side by side, an album opens next to Collections instead of over it.
+    // Side by side, an album lives in the pane beside Collections and never covers the tabs; the
+    // Library tab leaves it there for when Collections is back.
     val albumBeside = window.twoPane && tab != LibraryTab
+    val albumFullScreen = albumId.takeUnless { window.twoPane }
+    val albumShown = albumFullScreen != null || albumBeside && albumId != null
 
-    BackHandler(enabled = viewer == null && (albumId != null || tab != LibraryTab)) {
-        if (albumId != null) albumId = null else tab = LibraryTab
+    BackHandler(enabled = viewer == null && (albumShown || tab != LibraryTab)) {
+        if (albumShown) albumId = null else tab = LibraryTab
     }
 
     val navSizes = LocalPvotNavBarSizes.current
@@ -112,7 +115,7 @@ fun PhotosApp(viewModel: PhotosViewModel = hiltViewModel()) {
     ) {
         Box(Modifier.fillMaxSize()) {
             AnimatedContent(
-                targetState = albumId.takeUnless { albumBeside },
+                targetState = albumFullScreen,
                 transitionSpec = {
                     if (targetState != null) {
                         (slideInHorizontally { it } + fadeIn()) togetherWith
