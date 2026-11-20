@@ -36,6 +36,7 @@
     <string name="album_videos">Videos</string>
     <string name="section_albums">Albums</string>
     <string name="section_media_types">Media types</string>
+    <string name="album_pick">Pick an album</string>
 
     <string name="action_back">Back</string>
     <string name="action_share">Share</string>

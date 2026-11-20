@@ -52,6 +52,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
@@ -61,8 +63,11 @@ import org.prauga.photos.R
 import org.prauga.photos.common.format.formatDuration
 import org.prauga.photos.media.model.MediaItem
 
-private val ColumnSteps = listOf(1, 3, 5, 9)
-private const val DefaultColumnStep = 1
+/** Tile widths a pinch steps through, largest first: about 1, 3, 5 and 9 columns on a phone, more on a tablet. */
+private val TileSteps = listOf(360.dp, 120.dp, 72.dp, 40.dp)
+private const val DefaultTileStep = 1
+private const val LargeTileStep = 0
+private const val LastBadgeStep = 2
 private const val PinchInThreshold = 1.35f
 private const val PinchOutThreshold = 0.74f
 
@@ -79,8 +84,7 @@ fun MediaGrid(
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
-    var step by rememberSaveable { mutableIntStateOf(DefaultColumnStep) }
-    val columns = ColumnSteps[step]
+    var step by rememberSaveable { mutableIntStateOf(DefaultTileStep) }
     val currentItems by rememberUpdatedState(items)
 
     SideEffect {
@@ -94,7 +98,7 @@ fun MediaGrid(
     }
 
     LazyVerticalGrid(
-        columns = GridCells.Fixed(columns),
+        columns = remember(step) { TileWidthCells(TileSteps[step]) },
         state = state,
         contentPadding = contentPadding,
         horizontalArrangement = Arrangement.spacedBy(2.dp),
@@ -112,7 +116,7 @@ fun MediaGrid(
                             val next =
                                 when {
                                     zoom > PinchInThreshold && step > 0 -> step - 1
-                                    zoom < PinchOutThreshold && step < ColumnSteps.lastIndex -> step + 1
+                                    zoom < PinchOutThreshold && step < TileSteps.lastIndex -> step + 1
                                     else -> step
                                 }
                             if (next != step) {
@@ -131,8 +135,11 @@ fun MediaGrid(
             MediaTile(
                 item = item,
                 hidden = registry.hiddenId == item.id,
-                showBadges = columns <= 5,
-                request = remember(item.cacheKey) { thumbnailRequest(context, item) },
+                showBadges = step <= LastBadgeStep,
+                request =
+                    remember(item.cacheKey, step == LargeTileStep) {
+                        thumbnailRequest(context, item, large = step == LargeTileStep)
+                    },
                 modifier =
                     Modifier.animateItem(fadeInSpec = null, fadeOutSpec = null)
                         .onGloballyPositioned { registry.place(item.id, it.boundsInRoot()) }
@@ -147,6 +154,20 @@ fun MediaGrid(
 }
 
 const val FooterKey: String = "footer"
+
+/** As many columns as fit with tiles at least [target] wide, and never fewer than one. */
+private class TileWidthCells(private val target: Dp) : GridCells {
+    override fun Density.calculateCrossAxisCellSizes(availableSize: Int, spacing: Int): List<Int> {
+        val count = ((availableSize + spacing) / (target.roundToPx() + spacing)).coerceAtLeast(1)
+        val cell = (availableSize - spacing * (count - 1)) / count
+        val extra = availableSize - spacing * (count - 1) - cell * count
+        return List(count) { if (it < extra) cell + 1 else cell }
+    }
+
+    override fun equals(other: Any?): Boolean = other is TileWidthCells && other.target == target
+
+    override fun hashCode(): Int = target.hashCode()
+}
 
 private fun LazyGridState.isFullyVisible(index: Int): Boolean {
     val info = layoutInfo

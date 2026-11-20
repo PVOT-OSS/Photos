@@ -3,6 +3,7 @@
 
 package org.prauga.photos.collections.ui
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -43,28 +44,38 @@ import java.text.NumberFormat
 import org.prauga.photos.R
 import org.prauga.photos.common.ui.LargeTitleHeader
 import org.prauga.photos.common.ui.albumTitle
+import org.prauga.photos.common.ui.largeTitleClearance
 import org.prauga.photos.common.ui.stableStatusBars
 import org.prauga.photos.common.ui.thumbnailRequest
 import org.prauga.photos.media.model.Album
+
+private val CardMinWidth = 150.dp
+private val CardRadius = 18.dp
 
 @Composable
 fun CollectionsScreen(
     bottomInset: Dp,
     onOpen: (Album) -> Unit,
+    selectedId: String? = null,
     viewModel: CollectionsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    CollectionsContent(state, bottomInset, onOpen)
+    CollectionsContent(state, bottomInset, selectedId, onOpen)
 }
 
 @Composable
-private fun CollectionsContent(state: CollectionsUiState, bottomInset: Dp, onOpen: (Album) -> Unit) {
-    val top = WindowInsets.stableStatusBars.asPaddingValues().calculateTopPadding() + 64.dp
+private fun CollectionsContent(
+    state: CollectionsUiState,
+    bottomInset: Dp,
+    selectedId: String?,
+    onOpen: (Album) -> Unit,
+) {
+    val top = WindowInsets.stableStatusBars.asPaddingValues().calculateTopPadding() + largeTitleClearance()
     val bottom = bottomInset + 16.dp
 
     Box(Modifier.fillMaxSize()) {
         LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
+            columns = GridCells.Adaptive(CardMinWidth),
             contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = top, bottom = bottom),
             horizontalArrangement = Arrangement.spacedBy(14.dp),
             verticalArrangement = Arrangement.spacedBy(18.dp),
@@ -72,11 +83,11 @@ private fun CollectionsContent(state: CollectionsUiState, bottomInset: Dp, onOpe
         ) {
             if (state.mediaTypes.isNotEmpty()) {
                 item(span = { GridItemSpan(maxLineSpan) }) { SectionTitle(stringResource(R.string.section_media_types)) }
-                items(state.mediaTypes, key = { it.id }) { AlbumCard(it, onOpen) }
+                items(state.mediaTypes, key = { it.id }) { AlbumCard(it, it.id == selectedId, onOpen) }
             }
             if (state.folders.isNotEmpty()) {
                 item(span = { GridItemSpan(maxLineSpan) }) { SectionTitle(stringResource(R.string.section_albums)) }
-                items(state.folders, key = { it.id }) { AlbumCard(it, onOpen) }
+                items(state.folders, key = { it.id }) { AlbumCard(it, it.id == selectedId, onOpen) }
             }
         }
         LargeTitleHeader(title = stringResource(R.string.tab_collections), subtitle = "", overMedia = false)
@@ -94,7 +105,7 @@ private fun SectionTitle(text: String) {
 }
 
 @Composable
-private fun AlbumCard(album: Album, onOpen: (Album) -> Unit) {
+private fun AlbumCard(album: Album, selected: Boolean, onOpen: (Album) -> Unit) {
     val context = LocalContext.current
     val interaction = remember { MutableInteractionSource() }
     val title = albumTitle(album)
@@ -107,7 +118,18 @@ private fun AlbumCard(album: Album, onOpen: (Album) -> Unit) {
             model = remember(album.cover.cacheKey) { thumbnailRequest(context, album.cover) },
             contentDescription = title,
             contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(18.dp)),
+            modifier =
+                Modifier.fillMaxWidth()
+                    .aspectRatio(1f)
+                    .then(
+                        if (selected) {
+                            Modifier.border(3.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(CardRadius))
+                                .padding(5.dp)
+                        } else {
+                            Modifier
+                        }
+                    )
+                    .clip(RoundedCornerShape(if (selected) CardRadius - 5.dp else CardRadius)),
         )
         Text(
             text = title,

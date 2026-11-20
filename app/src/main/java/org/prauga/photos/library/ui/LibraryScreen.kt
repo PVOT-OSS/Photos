@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -40,6 +39,7 @@ import org.prauga.photos.common.ui.GridCountFooter
 import org.prauga.photos.common.ui.LargeTitleHeader
 import org.prauga.photos.common.ui.MediaGrid
 import org.prauga.photos.common.ui.TileRegistry
+import org.prauga.photos.common.ui.largeTitleClearance
 import org.prauga.photos.common.ui.stableStatusBars
 import org.prauga.photos.media.model.MediaItem
 
@@ -74,8 +74,8 @@ private fun LibraryContent(
 ) {
     val context = LocalContext.current
     // Created once the library has loaded: far past the end, they open on the newest row.
-    val months = rememberSaveable(saver = LazyListState.Saver) { LazyListState(Int.MAX_VALUE / 2) }
-    val years = rememberSaveable(saver = LazyListState.Saver) { LazyListState(Int.MAX_VALUE / 2) }
+    val months = rememberSaveable(saver = LazyGridState.Saver) { LazyGridState(Int.MAX_VALUE / 2) }
+    val years = rememberSaveable(saver = LazyGridState.Saver) { LazyGridState(Int.MAX_VALUE / 2) }
     val items = state.items
     val subtitle by
         remember(items) {
@@ -86,7 +86,7 @@ private fun LibraryContent(
                 items.getOrNull(index.coerceAtMost(items.lastIndex))?.let { formatMonthYear(context, it.date) }.orEmpty()
             }
         }
-    val top = WindowInsets.stableStatusBars.asPaddingValues().calculateTopPadding() + 72.dp
+    val top = WindowInsets.stableStatusBars.asPaddingValues().calculateTopPadding() + largeTitleClearance()
     val bottom = bottomInset + BottomGap
     val padding = PaddingValues(top = top, bottom = bottom)
     val sections =

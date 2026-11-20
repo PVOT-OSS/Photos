@@ -14,9 +14,10 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -40,15 +41,18 @@ import org.prauga.photos.common.ui.thumbnailRequest
 
 private const val CardAspectRatio = 1.5f
 
+private val CardMinWidth = 320.dp
+
 @Composable
 fun MediaGroupList(
     groups: List<MediaGroup>,
-    state: LazyListState,
+    state: LazyGridState,
     contentPadding: PaddingValues,
     label: (MediaGroup) -> String,
     onPick: (MediaGroup) -> Unit,
 ) {
-    LazyColumn(
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(CardMinWidth),
         state = state,
         contentPadding =
             PaddingValues(
@@ -58,6 +62,7 @@ fun MediaGroupList(
                 bottom = contentPadding.calculateBottomPadding(),
             ),
         verticalArrangement = Arrangement.spacedBy(14.dp),
+        horizontalArrangement = Arrangement.spacedBy(14.dp),
         modifier = Modifier.fillMaxSize(),
     ) {
         items(groups, key = { it.start }) { group -> GroupCard(group, label(group)) { onPick(group) } }

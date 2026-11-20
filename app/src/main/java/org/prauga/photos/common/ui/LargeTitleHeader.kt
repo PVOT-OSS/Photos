@@ -19,6 +19,8 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.prauga.pvot.designsystem.adaptive.PvotWindowHeight
+import com.prauga.pvot.designsystem.adaptive.rememberPvotWindowLayout
 import org.prauga.photos.R
 
 @Composable
@@ -42,17 +44,20 @@ fun LargeTitleHeader(
             Brush.verticalGradient(0.7f to background, 1f to background.copy(alpha = 0f))
         }
     val color = if (overMedia) colorResource(R.color.media_overlay_content) else MaterialTheme.colorScheme.onSurface
+    val short = rememberPvotWindowLayout().height == PvotWindowHeight.Compact
     val shadow = if (overMedia) Shadow(scrim.copy(alpha = 0.35f), blurRadius = 12f) else null
     Column(
         modifier
             .fillMaxWidth()
             .background(fade)
             .windowInsetsPadding(WindowInsets.stableStatusBars)
-            .padding(start = 20.dp, end = 20.dp, top = 8.dp + topInset, bottom = 28.dp)
+            .padding(start = 20.dp, end = 20.dp, top = 8.dp + topInset, bottom = if (short) 16.dp else 28.dp)
     ) {
         Text(
             text = title,
-            style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold, shadow = shadow),
+            style =
+                (if (short) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.headlineLarge)
+                    .copy(fontWeight = FontWeight.Bold, shadow = shadow),
             color = color,
         )
         if (subtitle.isNotEmpty()) {
@@ -64,3 +69,8 @@ fun LargeTitleHeader(
         }
     }
 }
+
+/** Room below the status bar for a [LargeTitleHeader]: less on a short window, where its title is smaller. */
+@Composable
+fun largeTitleClearance(): Dp =
+    if (rememberPvotWindowLayout().height == PvotWindowHeight.Compact) 48.dp else 72.dp

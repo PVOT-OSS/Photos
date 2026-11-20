@@ -17,10 +17,19 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -35,13 +44,19 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import com.prauga.pvot.designsystem.adaptive.PvotAdaptiveDefaults
+import com.prauga.pvot.designsystem.adaptive.PvotTwoPane
+import com.prauga.pvot.designsystem.adaptive.PvotWindowHeight
+import com.prauga.pvot.designsystem.adaptive.rememberPvotWindowLayout
 import com.prauga.pvot.designsystem.components.PvotScreenScaffold
+import com.prauga.pvot.designsystem.navigation.LocalPvotNavBarSizes
 import com.prauga.pvot.designsystem.navigation.PvotNavBar
 import com.prauga.pvot.designsystem.navigation.PvotTabItem
 import org.prauga.photos.access.ui.AccessScreen
 import org.prauga.photos.access.ui.MediaAccess
 import org.prauga.photos.access.ui.PartialAccessBanner
 import org.prauga.photos.access.ui.rememberMediaAccessState
+import org.prauga.photos.album.ui.AlbumPlaceholder
 import org.prauga.photos.album.ui.AlbumScreen
 import org.prauga.photos.collections.ui.CollectionsScreen
 import org.prauga.photos.common.ui.TileRegistry
@@ -70,6 +85,8 @@ fun PhotosApp(viewModel: PhotosViewModel = hiltViewModel()) {
         return
     }
 
+    val window = rememberPvotWindowLayout()
+    val short = window.height == PvotWindowHeight.Compact
     var tab by rememberSaveable { mutableIntStateOf(LibraryTab) }
     var libraryMode by rememberSaveable { mutableStateOf(LibraryMode.All) }
     val bars = rememberCollapsingBarsState()
@@ -82,98 +99,168 @@ fun PhotosApp(viewModel: PhotosViewModel = hiltViewModel()) {
     val registry = remember { TileRegistry() }
     // Far past the end: the grid clamps it, so the library opens on its newest row.
     val libraryGrid = remember { LazyGridState(firstVisibleItemIndex = Int.MAX_VALUE / 2) }
+    // Side by side, an album opens next to Collections instead of over it.
+    val albumBeside = window.twoPane && tab != LibraryTab
 
     BackHandler(enabled = viewer == null && (albumId != null || tab != LibraryTab)) {
         if (albumId != null) albumId = null else tab = LibraryTab
     }
 
-    Box(Modifier.fillMaxSize()) {
-        AnimatedContent(
-            targetState = albumId,
-            transitionSpec = {
-                if (targetState != null) {
-                    (slideInHorizontally { it } + fadeIn()) togetherWith (slideOutHorizontally { -it / 4 } + fadeOut())
+    val navSizes = LocalPvotNavBarSizes.current
+    CompositionLocalProvider(
+        LocalPvotNavBarSizes provides if (short) navSizes.copy(barHeight = navSizes.compactBarHeight) else navSizes
+    ) {
+        Box(Modifier.fillMaxSize()) {
+            AnimatedContent(
+                targetState = albumId.takeUnless { albumBeside },
+                transitionSpec = {
+                    if (targetState != null) {
+                        (slideInHorizontally { it } + fadeIn()) togetherWith
+                            (slideOutHorizontally { -it / 4 } + fadeOut())
+                    } else {
+                        (slideInHorizontally { -it / 4 } + fadeIn()) togetherWith
+                            (slideOutHorizontally { it } + fadeOut())
+                    }
+                },
+                label = "album",
+            ) { openAlbum ->
+                if (openAlbum != null) {
+                    AlbumScreen(
+                        albumId = openAlbum,
+                        registry = registry,
+                        onOpen = { viewer = ViewerRequest(openAlbum, it.id) },
+                        onBack = { albumId = null },
+                    )
                 } else {
-                    (slideInHorizontally { -it / 4 } + fadeIn()) togetherWith (slideOutHorizontally { it } + fadeOut())
-                }
-            },
-            label = "album",
-        ) { openAlbum ->
-            if (openAlbum != null) {
-                AlbumScreen(
-                    albumId = openAlbum,
-                    registry = registry,
-                    onOpen = { viewer = ViewerRequest(openAlbum, it.id) },
-                    onBack = { albumId = null },
-                )
-            } else {
-                PvotScreenScaffold(
-                    bottomBar = {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            // Measured only while expanded, so collapsing doesn't move the content under it.
-                            modifier =
-                                Modifier.onSizeChanged {
-                                    if (!bars.collapsed) bottomBarsHeight = with(density) { it.height.toDp() }
-                                },
-                        ) {
-                            AnimatedVisibility(
-                                visible = tab == LibraryTab && !bars.collapsed,
-                                enter = fadeIn() + expandVertically(expandFrom = Alignment.Bottom),
-                                exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Bottom),
-                            ) {
-                                LibraryModeBar(
-                                    mode = libraryMode,
-                                    onSelect = { libraryMode = it },
-                                    modifier = Modifier.padding(bottom = 12.dp),
-                                )
-                            }
-                            PvotNavBar(
-                                selectedTab = tab,
-                                onTabClick = {
+                    PvotScreenScaffold(
+                        bottomBar = {
+                            BottomBars(
+                                tab = tab,
+                                onTab = {
                                     tab = it
                                     bars.expand()
                                 },
-                                tabs = Tabs,
-                                compact = bars.collapsed,
-                                modifier = Modifier.padding(bottom = 8.dp),
+                                libraryMode = libraryMode,
+                                onLibraryMode = { libraryMode = it },
+                                collapsed = bars.collapsed,
+                                short = short,
+                                // Measured only while expanded, so collapsing doesn't move the content under it.
+                                modifier =
+                                    Modifier.onSizeChanged {
+                                        if (!bars.collapsed) bottomBarsHeight = with(density) { it.height.toDp() }
+                                    },
                             )
                         }
-                    }
-                ) { _ ->
-                    Crossfade(
-                        targetState = tab,
-                        animationSpec = tween(220),
-                        label = "tab",
-                        modifier = Modifier.nestedScroll(bars.connection),
-                    ) { selected ->
-                        if (selected == LibraryTab) {
-                            LibraryScreen(
-                                bottomInset = bottomBarsHeight,
-                                mode = libraryMode,
-                                onModeChange = { libraryMode = it },
-                                gridState = libraryGrid,
-                                registry = registry,
-                                onOpen = { viewer = ViewerRequest(ViewerViewModel.LibrarySource, it.id) },
-                                banner = {
-                                    if (access.access == MediaAccess.Partial) PartialAccessBanner(onManage = access::request)
-                                },
-                            )
-                        } else {
-                            CollectionsScreen(bottomInset = bottomBarsHeight, onOpen = { albumId = it.id })
+                    ) { _ ->
+                        Crossfade(
+                            targetState = tab,
+                            animationSpec = tween(220),
+                            label = "tab",
+                            modifier = Modifier.nestedScroll(bars.connection),
+                        ) { selected ->
+                            when {
+                                selected == LibraryTab ->
+                                    LibraryScreen(
+                                        bottomInset = bottomBarsHeight,
+                                        mode = libraryMode,
+                                        onModeChange = { libraryMode = it },
+                                        gridState = libraryGrid,
+                                        registry = registry,
+                                        onOpen = { viewer = ViewerRequest(ViewerViewModel.LibrarySource, it.id) },
+                                        banner = {
+                                            if (access.access == MediaAccess.Partial) {
+                                                PartialAccessBanner(onManage = access::request)
+                                            }
+                                        },
+                                    )
+                                albumBeside ->
+                                    PvotTwoPane(
+                                        first = {
+                                            CollectionsScreen(
+                                                bottomInset = bottomBarsHeight,
+                                                onOpen = { albumId = it.id },
+                                                selectedId = albumId,
+                                            )
+                                        },
+                                        second = {
+                                            val open = albumId
+                                            if (open == null) {
+                                                AlbumPlaceholder()
+                                            } else {
+                                                AlbumScreen(
+                                                    albumId = open,
+                                                    registry = registry,
+                                                    onOpen = { viewer = ViewerRequest(open, it.id) },
+                                                    onBack = null,
+                                                    bottomInset = bottomBarsHeight,
+                                                )
+                                            }
+                                        },
+                                        modifier = Modifier.fillMaxSize(),
+                                    )
+                                else -> CollectionsScreen(bottomInset = bottomBarsHeight, onOpen = { albumId = it.id })
+                            }
                         }
                     }
                 }
             }
-        }
 
-        viewer?.let { request ->
-            ViewerScreen(
-                source = request.source,
-                startId = request.startId,
-                registry = registry,
-                onClosed = { viewer = null },
+            viewer?.let { request ->
+                ViewerScreen(
+                    source = request.source,
+                    startId = request.startId,
+                    registry = registry,
+                    onClosed = { viewer = null },
+                )
+            }
+        }
+    }
+}
+
+/** The mode bar above the nav bar, or at its side on a short window, where the height is the photos'. */
+@Composable
+private fun BottomBars(
+    tab: Int,
+    onTab: (Int) -> Unit,
+    libraryMode: LibraryMode,
+    onLibraryMode: (LibraryMode) -> Unit,
+    collapsed: Boolean,
+    short: Boolean,
+    modifier: Modifier = Modifier,
+) {
+    val modeBar: @Composable (Modifier) -> Unit = { barModifier ->
+        AnimatedVisibility(
+            visible = tab == LibraryTab && !collapsed,
+            enter = fadeIn() + expandVertically(expandFrom = Alignment.Bottom),
+            exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Bottom),
+            modifier = barModifier,
+        ) {
+            LibraryModeBar(mode = libraryMode, onSelect = onLibraryMode)
+        }
+    }
+    val navBar: @Composable (Modifier) -> Unit = { barModifier ->
+        PvotNavBar(
+            selectedTab = tab,
+            onTabClick = onTab,
+            tabs = Tabs,
+            compact = collapsed || short,
+            modifier = barModifier.widthIn(max = PvotAdaptiveDefaults.ContentMaxWidth),
+        )
+    }
+    if (short) {
+        Box(modifier.fillMaxWidth(), contentAlignment = Alignment.BottomCenter) {
+            navBar(Modifier.padding(bottom = 8.dp))
+            modeBar(
+                Modifier.align(Alignment.BottomStart)
+                    .navigationBarsPadding()
+                    .windowInsetsPadding(WindowInsets.displayCutout.only(WindowInsetsSides.Start))
+                    .padding(start = 22.dp, bottom = 20.dp)
             )
+        }
+    } else {
+        Column(modifier = modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+            modeBar(Modifier.padding(bottom = 12.dp))
+            navBar(Modifier.padding(bottom = 8.dp))
         }
     }
 }
