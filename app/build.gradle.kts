@@ -11,7 +11,7 @@ plugins {
 // Semantic versioning: MAJOR for changes people must adapt to, MINOR for features, PATCH for fixes.
 // versionCode = MAJOR * 10000 + MINOR * 100 + PATCH (1.2.3 is 10203); releases are tagged v<versionName>.
 val versionMajor = 1
-val versionMinor = 0
+val versionMinor = 1
 val versionPatch = 0
 
 android {

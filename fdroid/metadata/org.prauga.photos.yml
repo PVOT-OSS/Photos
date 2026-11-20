@@ -11,8 +11,8 @@ IssueTracker: https://github.com/PVOT-OSS/Photos/issues
 WebSite: ""
 Categories:
   - Gallery
-CurrentVersion: "1.0.0"
-CurrentVersionCode: 10000
+CurrentVersion: "1.1.0"
+CurrentVersionCode: 10100
 Description: |
   Photos shows the pictures and videos on your phone in one timeline, with
   Years, Months and All views, pinch to resize the grid, a fast scroller,
@@ -27,6 +27,14 @@ Builds:
   - versionName: 1.0.0
     versionCode: 10000
     commit: v1.0.0
+    subdir: app
+    submodules: true
+    gradle:
+      - yes
+
+  - versionName: 1.1.0
+    versionCode: 10100
+    commit: v1.1.0
     subdir: app
     submodules: true
     gradle:
