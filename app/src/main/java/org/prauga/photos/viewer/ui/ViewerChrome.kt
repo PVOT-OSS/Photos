@@ -11,24 +11,32 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -37,7 +45,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.prauga.pvot.designsystem.adaptive.PvotAdaptiveDefaults
 import com.prauga.pvot.designsystem.components.PvotGlassIconButton
 import com.prauga.pvot.designsystem.components.PvotGlassSurface
 import com.prauga.pvot.designsystem.effects.PvotGlassBackdrop
@@ -63,7 +73,9 @@ fun ViewerChrome(
     actions: MediaActions,
     onBack: () -> Unit,
     onInfo: () -> Unit,
+    placement: ChromePlacement = ChromePlacement(),
 ) {
+    val safe = WindowInsets.safeDrawing
     Box(Modifier.fillMaxSize()) {
         AnimatedVisibility(
             visible = visible,
@@ -71,7 +83,12 @@ fun ViewerChrome(
             exit = fadeOut() + slideOutVertically { -it / 3 },
             modifier = Modifier.align(Alignment.TopCenter),
         ) {
-            Box(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = 16.dp, vertical = 8.dp)) {
+            Box(
+                Modifier.fillMaxWidth()
+                    .padding(end = placement.photoEndInset)
+                    .windowInsetsPadding(safe.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal))
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
                 PvotGlassIconButton(onClick = onBack, backdrop = backdrop) {
                     Icon(
                         painter = painterResource(R.drawable.ic_chevron_left),
@@ -102,19 +119,52 @@ fun ViewerChrome(
             }
         }
 
-        Column(
-            Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(vertical = 16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
+        if (placement.sideInfo) {
             AnimatedVisibility(
                 visible = visible && infoVisible && item != null,
-                enter = fadeIn() + expandVertically(spring(stiffness = 500f)),
-                exit = fadeOut() + shrinkVertically(),
+                enter = fadeIn() + slideInHorizontally { it / 3 },
+                exit = fadeOut() + slideOutHorizontally { it / 3 },
+                modifier =
+                    Modifier.align(Alignment.CenterEnd)
+                        .windowInsetsPadding(safe.only(WindowInsetsSides.End))
+                        .padding(end = 16.dp)
+                        .width(SideInfoWidth),
             ) {
-                if (item != null) InfoPanel(item, details, backdrop, Modifier.padding(horizontal = 16.dp))
+                if (item != null) InfoPanel(item, details, backdrop, Modifier)
+            }
+        }
+
+        // In tabletop posture the controls fill the flat half below the hinge, centred in it.
+        val controlsArea =
+            placement.controlsTop?.let { top -> Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(top = top) }
+                ?: Modifier.align(Alignment.BottomCenter)
+        Column(
+            controlsArea
+                .padding(end = placement.photoEndInset)
+                .windowInsetsPadding(safe.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal))
+                .padding(vertical = 16.dp)
+                .then(if (placement.controlsTop != null) Modifier.fillMaxSize() else Modifier),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(0.dp, Alignment.CenterVertically),
+        ) {
+            if (!placement.sideInfo) {
+                AnimatedVisibility(
+                    visible = visible && infoVisible && item != null,
+                    enter = fadeIn() + expandVertically(spring(stiffness = 500f)),
+                    exit = fadeOut() + shrinkVertically(),
+                ) {
+                    if (item != null) {
+                        InfoPanel(
+                            item,
+                            details,
+                            backdrop,
+                            Modifier.padding(horizontal = 16.dp).widthIn(max = PvotAdaptiveDefaults.ContentMaxWidth),
+                        )
+                    }
+                }
             }
             AnimatedVisibility(
-                visible = visible && !infoVisible && items.size > 1,
+                visible = visible && placement.filmstrip && !(infoVisible && !placement.sideInfo) && items.size > 1,
                 enter = fadeIn(),
                 exit = fadeOut(),
             ) {
@@ -130,6 +180,21 @@ fun ViewerChrome(
         }
     }
 }
+
+val SideInfoWidth = 360.dp
+
+/**
+ * Where the viewer's controls go for the window: [sideInfo] docks the info panel beside the photo,
+ * [photoEndInset] is the room it takes, so the controls centre under the photo, [controlsTop] puts
+ * them on the flat half below a tabletop hinge, and [filmstrip] is off where the height is short.
+ */
+@Immutable
+data class ChromePlacement(
+    val sideInfo: Boolean = false,
+    val photoEndInset: Dp = 0.dp,
+    val controlsTop: Dp? = null,
+    val filmstrip: Boolean = true,
+)
 
 @Composable
 private fun ActionBar(item: MediaItem, backdrop: PvotGlassBackdrop, actions: MediaActions, onInfo: () -> Unit) {

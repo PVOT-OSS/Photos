@@ -10,6 +10,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.VectorConverter
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
@@ -43,15 +44,18 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
+import com.prauga.pvot.designsystem.adaptive.PvotWindowHeight
+import com.prauga.pvot.designsystem.adaptive.PvotWindowWidth
+import com.prauga.pvot.designsystem.adaptive.rememberPvotWindowLayout
 import com.prauga.pvot.designsystem.effects.pvotGlassBackdrop
 import com.prauga.pvot.designsystem.effects.rememberPvotGlassBackdrop
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.abs
 import kotlinx.coroutines.launch
@@ -146,8 +150,27 @@ private fun ViewerContent(
     }
 
     BoxWithConstraints(Modifier.fillMaxSize()) {
-        val container = Size(constraints.maxWidth.toFloat(), constraints.maxHeight.toFloat())
-        val dismissDistance = with(LocalDensity.current) { 160.dp.toPx() }
+        val density = LocalDensity.current
+        val window = rememberPvotWindowLayout()
+        val full = Size(constraints.maxWidth.toFloat(), constraints.maxHeight.toFloat())
+        // Where the photo sits: above the hinge in tabletop posture, beside the info panel on a wide window.
+        val hingeTop = window.hinge?.takeIf { window.tabletop }?.bounds?.top?.toFloat()
+        val sideInfo = window.width != PvotWindowWidth.Compact && hingeTop == null
+        val sideRoom by
+            animateFloatAsState(
+                if (sideInfo && info) with(density) { (SideInfoWidth + 32.dp).toPx() } else 0f,
+                label = "viewerSideRoom",
+            )
+        val area = Rect(0f, 0f, full.width - sideRoom, hingeTop ?: full.height)
+        val container = area.size
+        val placement =
+            ChromePlacement(
+                sideInfo = sideInfo,
+                photoEndInset = with(density) { sideRoom.toDp() },
+                controlsTop = hingeTop?.let { with(density) { it.toDp() } },
+                filmstrip = window.height != PvotWindowHeight.Compact,
+            )
+        val dismissDistance = with(density) { 160.dp.toPx() }
         val dragFraction = (abs(drag.value.y) / (container.height / 2)).coerceIn(0f, 1f)
         val dragScale = 1f - DragShrink * dragFraction
 
@@ -203,7 +226,7 @@ private fun ViewerContent(
             Box(Modifier.fillMaxSize().graphicsLayer { alpha = backgroundAlpha }.background(background))
             // Composed while hidden, so the full image loads during the opening animation.
             Box(
-                Modifier.fillMaxSize()
+                Modifier.size(with(density) { area.width.toDp() }, with(density) { area.height.toDp() })
                     .graphicsLayer {
                         alpha = if (phase == Phase.Open) 1f else 0f
                         translationX = drag.value.x
@@ -252,6 +275,7 @@ private fun ViewerContent(
             actions = actions,
             onBack = ::close,
             onInfo = { info = !info },
+            placement = placement,
         )
     }
 }
