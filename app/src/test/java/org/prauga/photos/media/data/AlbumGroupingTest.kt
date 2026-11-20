@@ -4,6 +4,7 @@
 package org.prauga.photos.media.data
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.prauga.photos.media.model.AlbumKind
@@ -49,5 +50,15 @@ class AlbumGroupingTest {
         assertEquals(listOf(AlbumKind.Favorites, AlbumKind.Videos), types.map { it.kind })
         assertEquals(listOf(1L), types[0].items.map { it.id })
         assertEquals(listOf(2L), types[1].items.map { it.id })
+    }
+
+    @Test
+    fun albumOfFindsFoldersAndMediaTypesAndNothingElse() {
+        val items = listOf(item(1, 10, bucket = 7, video = true))
+
+        assertEquals("bucket:7", albumOf(items, "bucket:7")?.id)
+        assertEquals(AlbumKind.Videos, albumOf(items, VideosAlbumId)?.kind)
+        assertNull(albumOf(items, FavoritesAlbumId))
+        assertNull(albumOf(items, "bucket:8"))
     }
 }

@@ -18,7 +18,9 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.prauga.photos.media.data.MediaRepository
+import org.prauga.photos.media.model.AlbumLookup
 import org.prauga.photos.media.model.CaptureDetails
+import org.prauga.photos.media.model.MediaItem
 
 /** [source] is [LibrarySource] or an album id. */
 @HiltViewModel(assistedFactory = ViewerViewModel.Factory::class)
@@ -33,7 +35,13 @@ constructor(@Assisted source: String, private val repository: MediaRepository) :
                 if (source == LibrarySource) {
                     repository.media.map { it.orEmpty() to (it != null) }
                 } else {
-                    repository.album(source).map { it?.items.orEmpty() to true }
+                    repository.album(source).map {
+                        when (it) {
+                            AlbumLookup.Loading -> emptyList<MediaItem>() to false
+                            AlbumLookup.Missing -> emptyList<MediaItem>() to true
+                            is AlbumLookup.Found -> it.album.items to true
+                        }
+                    }
                 },
                 details,
             ) { (items, loaded), details ->

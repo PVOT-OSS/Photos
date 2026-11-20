@@ -12,9 +12,9 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import org.prauga.photos.di.ApplicationScope
 import org.prauga.photos.media.model.Album
+import org.prauga.photos.media.model.AlbumLookup
 import org.prauga.photos.media.model.CaptureDetails
 import org.prauga.photos.media.model.MediaItem
 
@@ -53,10 +54,16 @@ constructor(
         canRead.value = value
     }
 
-    fun album(id: String): Flow<Album?> =
-        combine(mediaTypes, folders) { types, buckets ->
-            types.find { it.id == id } ?: buckets.find { it.id == id }
-        }
+    /** Found straight from [media], so it never reads a grouping that lags behind the library. */
+    fun album(id: String): Flow<AlbumLookup> =
+        media
+            .map { items ->
+                when (items) {
+                    null -> AlbumLookup.Loading
+                    else -> albumOf(items, id)?.let(AlbumLookup::Found) ?: AlbumLookup.Missing
+                }
+            }
+            .distinctUntilChanged()
 
     suspend fun captureDetails(item: MediaItem): CaptureDetails? = if (item.isVideo) null else exif.read(item.uri)
 

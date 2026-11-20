@@ -102,7 +102,9 @@ fun PhotosApp(viewModel: PhotosViewModel = hiltViewModel()) {
     // Side by side, an album lives in the pane beside Collections and never covers the tabs; the
     // Library tab leaves it there for when Collections is back.
     val albumBeside = window.twoPane && tab != LibraryTab
-    val albumFullScreen = albumId.takeUnless { window.twoPane }
+    // Full screen only where it was opened, Collections on a narrow window: a hidden pane album must
+    // not cover Library when the window narrows.
+    val albumFullScreen = albumId.takeIf { !window.twoPane && tab != LibraryTab }
     val albumShown = albumFullScreen != null || albumBeside && albumId != null
 
     BackHandler(enabled = viewer == null && (albumShown || tab != LibraryTab)) {
@@ -133,6 +135,7 @@ fun PhotosApp(viewModel: PhotosViewModel = hiltViewModel()) {
                         registry = registry,
                         onOpen = { viewer = ViewerRequest(openAlbum, it.id) },
                         onBack = { albumId = null },
+                        onMissing = { if (albumId == openAlbum) albumId = null },
                     )
                 } else {
                     PvotScreenScaffold(
@@ -197,6 +200,7 @@ fun PhotosApp(viewModel: PhotosViewModel = hiltViewModel()) {
                                                     registry = registry,
                                                     onOpen = { viewer = ViewerRequest(open, it.id) },
                                                     onBack = null,
+                                                    onMissing = { if (albumId == open) albumId = null },
                                                     bottomInset = bottomBarsHeight,
                                                 )
                                             }

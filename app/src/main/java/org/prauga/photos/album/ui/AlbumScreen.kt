@@ -20,6 +20,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -48,18 +49,23 @@ import org.prauga.photos.common.ui.stableStatusBars
 import org.prauga.photos.media.model.Album
 import org.prauga.photos.media.model.MediaItem
 
-/** [onBack] is null in a pane beside Collections, where there is nothing to go back to. */
+/**
+ * [onBack] is null in a pane beside Collections, where there is nothing to go back to. [onMissing]
+ * runs when the album no longer exists, such as after its last photo was deleted elsewhere.
+ */
 @Composable
 fun AlbumScreen(
     albumId: String,
     registry: TileRegistry,
     onOpen: (MediaItem) -> Unit,
     onBack: (() -> Unit)?,
+    onMissing: () -> Unit,
     bottomInset: Dp = 0.dp,
     viewModel: AlbumViewModel =
         hiltViewModel<AlbumViewModel, AlbumViewModel.Factory>(key = "album:$albumId") { it.create(albumId) },
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(state.missing) { if (state.missing) onMissing() }
     val album = state.album ?: return
     AlbumContent(album, registry, onOpen, onBack, bottomInset)
 }

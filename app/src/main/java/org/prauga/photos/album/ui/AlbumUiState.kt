@@ -7,4 +7,4 @@ import androidx.compose.runtime.Immutable
 import org.prauga.photos.media.model.Album
 
 @Immutable
-data class AlbumUiState(val album: Album? = null)
+data class AlbumUiState(val album: Album? = null, val missing: Boolean = false)

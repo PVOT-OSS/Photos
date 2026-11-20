@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.prauga.photos.media.data.MediaRepository
+import org.prauga.photos.media.model.AlbumLookup
 
 @HiltViewModel(assistedFactory = AlbumViewModel.Factory::class)
 class AlbumViewModel @AssistedInject constructor(@Assisted albumId: String, repository: MediaRepository) :
@@ -22,7 +23,13 @@ class AlbumViewModel @AssistedInject constructor(@Assisted albumId: String, repo
     val uiState: StateFlow<AlbumUiState> =
         repository
             .album(albumId)
-            .map(::AlbumUiState)
+            .map {
+                when (it) {
+                    AlbumLookup.Loading -> AlbumUiState()
+                    AlbumLookup.Missing -> AlbumUiState(missing = true)
+                    is AlbumLookup.Found -> AlbumUiState(it.album)
+                }
+            }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AlbumUiState())
 
     @AssistedFactory

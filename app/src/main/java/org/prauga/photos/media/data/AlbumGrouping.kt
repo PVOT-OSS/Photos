@@ -27,3 +27,10 @@ internal fun mediaTypeAlbums(items: List<MediaItem>): List<Album> =
             .takeIf { it.isNotEmpty() }
             ?.let { Album(VideosAlbumId, AlbumKind.Videos, "", it) },
     )
+
+/** The album with [id] among [items]' media types and folders, or null when none has that id. */
+internal fun albumOf(items: List<MediaItem>, id: String): Album? =
+    when (id) {
+        FavoritesAlbumId, VideosAlbumId -> mediaTypeAlbums(items).find { it.id == id }
+        else -> folderAlbums(items).find { it.id == id }
+    }
